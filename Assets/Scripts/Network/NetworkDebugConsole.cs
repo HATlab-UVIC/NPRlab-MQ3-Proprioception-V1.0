@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using TMPro;
 using Unity.Netcode;
 using UnityEditor.PackageManager;
@@ -12,7 +13,8 @@ public class NetworkDebugConsole : MonoBehaviour
         Disconnected,
     }
     public event Action<ulong, ConnectionStatus> OnClientConnection;
-    [SerializeField] private TMP_Text _tmpText;
+    [SerializeField] private TMP_Text   _tmpText;
+    private ulong hostId;
 
     private void Awake() {
         if (Singleton != null)
@@ -38,24 +40,39 @@ public class NetworkDebugConsole : MonoBehaviour
     }
 
     private void OnDestroy() {
-        if (Singleton != null)
+        if (NetworkManager.Singleton != null)
         {
             NetworkManager.Singleton.OnClientConnectedCallback -= OnNetworkConnectionEvent;
-            NetworkManager.Singleton.OnClientDisconnectCallback -= OnNetworkConnectionEvent;
+            NetworkManager.Singleton.OnClientDisconnectCallback -= OnNetworkDisconnectionEvent;
         }
     }
 
     private void OnNetworkConnectionEvent(ulong clientId) {
         OnClientConnection?.Invoke(clientId, ConnectionStatus.Connected);
-        SetDebugString("Host connected with name: " + NetworkManager.Singleton.ConnectedHostname);
+        if (NetworkManager.Singleton.IsHost)
+        {
+            SetDebugString("Hosted with id: " + clientId);
+            hostId = clientId;
+        }
+        else if (NetworkManager.Singleton.ConnectedClientsIds.Contains(clientId))
+        {
+            SetDebugString("Client connected with id: " + clientId);
+        }
     }
     private void OnNetworkDisconnectionEvent(ulong clientId) {
         OnClientConnection?.Invoke(clientId, ConnectionStatus.Disconnected);
-        SetDebugString("Host disconnected because: " + NetworkManager.Singleton.DisconnectReason);
+        if (clientId == hostId)
+        {
+            SetDebugString("Host disconnected with host id: " + clientId);
+        }
+        else
+        {
+            SetDebugString("Disconnected for unknown reason");
+        }
     }
 
     private void SetDebugString(string str) {
-        _tmpText.text += str + "\n";
+        _tmpText.text += DateTime.Now.ToString("HH:mm:ss") + " " + str + "\n";
     }
 
 }
