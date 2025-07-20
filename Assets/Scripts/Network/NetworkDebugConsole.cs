@@ -2,7 +2,6 @@ using System;
 using System.Linq;
 using TMPro;
 using Unity.Netcode;
-using UnityEditor.PackageManager;
 using UnityEngine;
 
 public class NetworkDebugConsole : MonoBehaviour
@@ -13,7 +12,7 @@ public class NetworkDebugConsole : MonoBehaviour
         Disconnected,
     }
     public event Action<ulong, ConnectionStatus> OnClientConnection;
-    [SerializeField] private TMP_Text   _tmpText;
+    [SerializeField] private TMP_Text _tmpText;
     private ulong hostId;
 
     private void Awake() {
@@ -71,7 +70,7 @@ public class NetworkDebugConsole : MonoBehaviour
         }
     }
 
-    private void SetDebugString(string str) {
+    public void SetDebugString(string str) {
         _tmpText.text += DateTime.Now.ToString("HH:mm:ss") + " " + str + "\n";
     }
 
