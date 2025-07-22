@@ -1,10 +1,12 @@
 using System;
 using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
 using TMPro;
 using Unity.Netcode;
 using Unity.Services.Authentication;
 using Unity.Services.Core;
+using Unity.Services.Lobbies;
 using Unity.Services.Multiplayer;
 using UnityEngine;
 
@@ -13,6 +15,7 @@ public class NetworkManagerMetaQuest : MonoBehaviour
     [SerializeField] TMP_Text _joinCode;
     private ISession _activeSession;
     private string _playerNamePropertyKey = "playerName";
+
 
     ISession _ActiveSession
     {
@@ -32,13 +35,32 @@ public class NetworkManagerMetaQuest : MonoBehaviour
             await AuthenticationService.Instance.SignInAnonymouslyAsync();
             Debug.Log($"Sign in anonymously successed! Player ID: {AuthenticationService.Instance.PlayerId}");
 
-            // StartSessionAsHost();
+            // JoinSessionByCode();
         }
         catch (Exception e)
         {
             Debug.LogException(e);
         }
     }
+
+    // This is for testing if joining and quiting work
+    /*private float _timer = 0;
+    private void Update() {
+        _timer += Time.deltaTime;
+        if (_timer > 6.0f)
+        {
+            _timer = 0;
+
+            if ( _activeSession == null || _activeSession.State == SessionState.Disconnected)
+            {
+                JoinSessionByCode();
+            }
+            else
+            {
+                QuitSession();
+            }
+        }
+    }*/
 
     private async Task<Dictionary<string, PlayerProperty>> GetPlayerProperties() {
         var playerName = await AuthenticationService.Instance.GetPlayerNameAsync();
@@ -48,16 +70,46 @@ public class NetworkManagerMetaQuest : MonoBehaviour
 
     public async void JoinSessionByCode() {
         string sessionJoinCode = _joinCode.text.Replace("\u200B", "");
-        _ActiveSession = await MultiplayerService.Instance.JoinSessionByCodeAsync(sessionJoinCode);
-        Debug.Log($"Connected to {NetworkManager.Singleton.ConnectedClientsIds} with code {sessionJoinCode}");
-        NetworkDebugConsole.Singleton.SetDebugString($"Connected to {NetworkManager.Singleton.ConnectedClientsIds[0]} with code {sessionJoinCode}");
+        try
+        {
+            _ActiveSession = await MultiplayerService.Instance.JoinSessionByCodeAsync(sessionJoinCode);
+        }
+        catch (Exception e)
+        {
+            Debug.LogException(e);
+            NetworkDebugConsole.Singleton.SetDebugString($"{e.Message}");
+            return;
+        }
+        if (NetworkManager.Singleton.IsClient)
+        {
+            NetworkDebugConsole.Singleton.SetDebugString($"Connected to to host with code {sessionJoinCode}");
+        }
     }
 
-    public async void Quit() {
+    public async void QuitSession() {
         _joinCode.text = string.Empty;
         QuerySessionsOptions _queryOption = new QuerySessionsOptions();
-        await MultiplayerService.Instance.QuerySessionsAsync(_queryOption);
-        Debug.Log($"Exited session with code {_ActiveSession.Code}");
+
+        if (_activeSession == null)
+        {
+            NetworkDebugConsole.Singleton.SetDebugString("Session does not exist");
+            return;
+        }
+        else if (_activeSession.State == SessionState.Disconnected)
+        {
+            NetworkDebugConsole.Singleton.SetDebugString("Cannot quit session. Session is already disconnected");
+        }
+        try
+        {
+            string _playerId = AuthenticationService.Instance.PlayerId;
+            await _activeSession.LeaveAsync();
+        }
+        catch (Exception e)
+        {
+            Debug.LogException(e);
+            NetworkDebugConsole.Singleton.SetDebugString($"{e.Message}");
+            return;
+        }
         NetworkDebugConsole.Singleton.SetDebugString($"Exited session with code {_ActiveSession.Code}");
     }
 

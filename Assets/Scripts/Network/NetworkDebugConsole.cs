@@ -13,7 +13,9 @@ public class NetworkDebugConsole : MonoBehaviour
     }
     public event Action<ulong, ConnectionStatus> OnClientConnection;
     [SerializeField] private TMP_Text _tmpText;
+    [SerializeField] private int _lineCountMax = 19;
     private ulong hostId;
+    private int _lineCount = 0;
 
     private void Awake() {
         if (Singleton != null)
@@ -64,14 +66,30 @@ public class NetworkDebugConsole : MonoBehaviour
         {
             SetDebugString("Host disconnected with host id: " + clientId);
         }
+        else if (clientId == NetworkManager.Singleton.LocalClientId)
+        {
+            SetDebugString("Local client disconnected");
+        }
         else
         {
-            SetDebugString("Disconnected for unknown reason");
+            SetDebugString($"Another client disconnected with {clientId}");
         }
     }
 
     public void SetDebugString(string str) {
+        string[] lines = _tmpText.text.Split(new[] { '\n' }, StringSplitOptions.None);
+        if (_lineCount > 0)
+        {
+            if (_lineCount >= _lineCountMax)
+            {
+                int index = _tmpText.text.IndexOf(System.Environment.NewLine);
+                _tmpText.text = string.Join("\n", lines.Skip(1)); ;
+                _lineCount--;
+            }
+        }
         _tmpText.text += DateTime.Now.ToString("HH:mm:ss") + " " + str + "\n";
+        _lineCount++;
+        Debug.Log(_tmpText.text);
     }
 
 }
