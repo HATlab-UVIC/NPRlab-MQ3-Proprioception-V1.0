@@ -32,6 +32,7 @@ public class TargetController : MonoBehaviour
     }
 
     public void Disappear() {
+        _material = gameObject.GetComponent<MeshRenderer>().material;
         _startDisappearing = true;
     }
 
