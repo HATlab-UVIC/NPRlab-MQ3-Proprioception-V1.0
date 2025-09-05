@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using TMPro;
@@ -9,13 +10,15 @@ using Unity.Services.Core;
 using Unity.Services.Lobbies;
 using Unity.Services.Multiplayer;
 using UnityEngine;
+using static NetworkDebugConsole;
 
 public class NetworkManagerMetaQuest : MonoBehaviour
 {
+    public event Action<ulong, ConnectionStatus> OnClientConnection;
     [SerializeField] TMP_Text _joinCode;
     private ISession _activeSession;
     private string _playerNamePropertyKey = "playerName";
-
+    private ulong hostId;
 
     ISession _ActiveSession
     {
@@ -41,6 +44,8 @@ public class NetworkManagerMetaQuest : MonoBehaviour
         {
             Debug.LogException(e);
         }
+        NetworkManager.Singleton.OnClientConnectedCallback += OnNetworkConnectionEvent;
+        NetworkManager.Singleton.OnClientDisconnectCallback += OnNetworkDisconnectionEvent;
     }
 
     // This is for testing if joining and quiting work
@@ -148,6 +153,40 @@ public class NetworkManagerMetaQuest : MonoBehaviour
         }
     }
 
+
+    private void OnNetworkConnectionEvent(ulong clientId) {
+        OnClientConnection?.Invoke(clientId, ConnectionStatus.Connected);
+        if (NetworkManager.Singleton.IsHost)
+        {
+            NetworkDebugConsole.Singleton.SetDebugString("Hosted with id: " + clientId);
+            hostId = clientId;
+        }
+        else if (NetworkManager.Singleton.ConnectedClientsIds.Contains(clientId))
+        {
+            NetworkDebugConsole.Singleton.SetDebugString("Client connected with id: " + clientId);
+        }
+    }
+    private void OnNetworkDisconnectionEvent(ulong clientId) {
+        OnClientConnection?.Invoke(clientId, ConnectionStatus.Disconnected);
+        if (clientId == hostId)
+        {
+            NetworkDebugConsole.Singleton.SetDebugString("Host disconnected with host id: " + clientId);
+        }
+        else if (clientId == NetworkManager.Singleton.LocalClientId)
+        {
+            NetworkDebugConsole.Singleton.SetDebugString("Local client disconnected");
+        }
+        else
+        {
+            NetworkDebugConsole.Singleton.SetDebugString($"Another client disconnected with {clientId}");
+        }
+    }
+
     private void OnDestroy() {
+        if (NetworkManager.Singleton != null)
+        {
+            NetworkManager.Singleton.OnClientConnectedCallback -= OnNetworkConnectionEvent;
+            NetworkManager.Singleton.OnClientDisconnectCallback -= OnNetworkDisconnectionEvent;
+        }
     }
 }

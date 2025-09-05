@@ -32,8 +32,14 @@ public class TargetController : MonoBehaviour
     }
 
     public void Disappear() {
+        ControlManager.Singleton.DestroyThisTarget(transform);
         _material = gameObject.GetComponent<MeshRenderer>().material;
         _startDisappearing = true;
+    }
+
+    public void DisappearNow() {
+        ControlManager.Singleton.DestroyThisTarget(transform);
+        GameObject.Destroy(gameObject);
     }
 
     public void Capture() {

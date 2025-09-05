@@ -40,6 +40,8 @@ public class ControlManager : NetworkBehaviour
                     "SpawnFromServer", OnSpawnInputMessageReceived);
                 NetworkManager.Singleton.CustomMessagingManager.RegisterNamedMessageHandler(
                     "DespawnFromServer", OnDesapwnInputMessageReceived);
+                NetworkManager.Singleton.CustomMessagingManager.RegisterNamedMessageHandler(
+                    "DespawnAllFromServer", OnDesapwnAllMessageReceived);
             }
         };
         if (Singleton != null)
@@ -102,30 +104,56 @@ public class ControlManager : NetworkBehaviour
                     NetworkDebugConsole.Singleton.SetDebugString($"Target {i} is out of range");
                 }
             }
-            NetworkDebugConsole.Singleton.SetDebugString($"Left hand and target {i} are {Vector3.Distance(_targets[i].position, _leftIndexTipPosition)} away");
-            NetworkDebugConsole.Singleton.SetDebugString($"Right hand and target {i} are {Vector3.Distance(_targets[i].position, _leftIndexTipPosition)} away");
+            // NetworkDebugConsole.Singleton.SetDebugString($"Left hand and target {i} are {Vector3.Distance(_targets[i].position, _leftIndexTipPosition)} away");
+            // NetworkDebugConsole.Singleton.SetDebugString($"Right hand and target {i} are {Vector3.Distance(_targets[i].position, _rightIndexTipPosition)} away");
         }
+        // NetworkDebugConsole.Singleton.SetDebugString($"{_targetsInRange.Count} targets are in range");
     }
 
     private void FindClosestTarget() {
+        Transform _previousClosestTarget = _closestTarget;
         if (_numberOfTargets > 0)
         {
-            for (int i = 0; i < _targetsInRange.Count; i++)
+            if (_targetsInRange.Count > 0)
+            {
+                for (int i = 0; i < _targetsInRange.Count; i++)
+                {
+                    if (_closestTarget != null)
+                    {
+                        if (_targetsInRange[i] != _closestTarget)
+                        {
+                            if (Vector3.Distance(_leftIndexTipPosition, _targetsInRange[i].position) < Vector3.Distance(_leftIndexTipPosition, _closestTarget.position))
+                            {
+                                _closestTarget = _targetsInRange[i];
+                            }
+                            if (Vector3.Distance(_rightIndexTipPosition, _targetsInRange[i].position) < Vector3.Distance(_rightIndexTipPosition, _closestTarget.position))
+                            {
+                                _closestTarget = _targetsInRange[i];
+                            }
+                        }
+                    }
+                    else
+                    {
+                        _closestTarget = _targetsInRange[0];
+                    }
+                }
+                if (_closestTarget != _previousClosestTarget)
+                {
+                    if (_previousClosestTarget.transform.TryGetComponent(out LineRenderer lineRenderer))
+                    {
+                        Destroy(lineRenderer);
+                    }
+                }
+            }
+            else
             {
                 if (_closestTarget != null)
                 {
-                    if (Vector3.Distance(_leftIndexTipPosition, _targetsInRange[i].position) < Vector3.Distance(_leftIndexTipPosition, _closestTarget.position))
+                    if (_closestTarget.TryGetComponent(out LineRenderer _lineRenderer))
                     {
-                        _closestTarget = _targetsInRange[i];
+                        Destroy(_lineRenderer);
+                        _closestTarget = null;
                     }
-                    if (Vector3.Distance(_rightIndexTipPosition, _targetsInRange[i].position) < Vector3.Distance(_rightIndexTipPosition, _closestTarget.position))
-                    {
-                        _closestTarget = _targetsInRange[i];
-                    }
-                }
-                else
-                {
-                    _closestTarget = _targetsInRange[0];
                 }
             }
         }
@@ -133,45 +161,65 @@ public class ControlManager : NetworkBehaviour
         {
             _closestTarget = null;
         }
+        NetworkDebugConsole.Singleton.SetDebugString($"Closest target is {_closestTarget.GetComponent<TargetController>().index}");
+    }
+
+    public void DestroyThisTarget(Transform _targetToBeDestroyed) {
+        if (_targets.Contains(_targetToBeDestroyed))
+        {
+            _targets.Remove(_targetToBeDestroyed);
+        }
+        if (_targetsInRange.Contains(_targetToBeDestroyed))
+        {
+            _targetsInRange.Remove(_targetToBeDestroyed);
+        }
+        if (_closestTarget == _targetToBeDestroyed)
+        {
+            _closestTarget = null;
+        }
     }
 
     private void RenderClosestTargetAim() {
-        if ( _closestTarget != null )
+        if (_targetsInRange.Count > 0)
         {
-            if (_closestTarget.TryGetComponent(out LineRenderer _lineRenderer))
+            if (_closestTarget != null)
             {
-                _lineRenderer.startWidth = 0.01f;
-                _lineRenderer.endWidth = 0.01f;
-                _lineRenderer.useWorldSpace = true;
-                _lineRenderer.material = _lineRendererMaterial;
-                _lineRenderer.positionCount = 2;
-                _lineRenderer.SetPosition(0, _closestTarget.position);
-                if (Vector3.Distance(_leftIndexTipPosition, _closestTarget.position) < Vector3.Distance(_rightIndexTipPosition, _closestTarget.position))
+                if (_closestTarget.TryGetComponent(out LineRenderer _lineRenderer))
                 {
-                    _lineRenderer.SetPosition(1, _leftIndexTipPosition);
+                    /*_lineRenderer.startWidth = 0.01f;
+                    _lineRenderer.endWidth = 0.01f;
+                    _lineRenderer.useWorldSpace = true;
+                    _lineRenderer.material = _lineRendererMaterial;
+                    _lineRenderer.positionCount = 2;*/
+                    _lineRenderer.SetPosition(0, _closestTarget.position);
+                    if (Vector3.Distance(_leftIndexTipPosition, _closestTarget.position) < Vector3.Distance(_rightIndexTipPosition, _closestTarget.position))
+                    {
+                        _lineRenderer.SetPosition(1, _leftIndexTipPosition);
+                    }
+                    else
+                    {
+                        _lineRenderer.SetPosition(1, _rightIndexTipPosition);
+                    }
                 }
                 else
                 {
-                    _lineRenderer.SetPosition(1, _rightIndexTipPosition);
-                }
-            }
-            else
-            {
-                _closestTarget.AddComponent<LineRenderer>();
-                _lineRenderer = _closestTarget.GetComponent<LineRenderer>();
-                _lineRenderer.startWidth = 0.01f;
-                _lineRenderer.endWidth = 0.01f;
-                _lineRenderer.useWorldSpace = true;
-                _lineRenderer.material = _lineRendererMaterial;
-                _lineRenderer.positionCount = 2;
-                _lineRenderer.SetPosition(0, _closestTarget.position);
-                if (Vector3.Distance(_leftIndexTipPosition, _closestTarget.position) < Vector3.Distance(_rightIndexTipPosition, _closestTarget.position))
-                {
-                    _lineRenderer.SetPosition(1, _leftIndexTipPosition);
-                }
-                else
-                {
-                    _lineRenderer.SetPosition(1, _rightIndexTipPosition);
+                    _closestTarget.AddComponent<LineRenderer>();
+                    LineRenderer _addedLineRenderer = _closestTarget.GetComponent<LineRenderer>();
+                    _addedLineRenderer = _closestTarget.GetComponent<LineRenderer>();
+                    _addedLineRenderer.startWidth = 0.01f;
+                    _addedLineRenderer.endWidth = 0.01f;
+                    _addedLineRenderer.useWorldSpace = true;
+                    _addedLineRenderer.material = _lineRendererMaterial;
+                    _addedLineRenderer.positionCount = 2;
+                    _addedLineRenderer.SetPosition(0, _closestTarget.position);
+                    if (Vector3.Distance(_leftIndexTipPosition, _closestTarget.position) < Vector3.Distance(_rightIndexTipPosition, _closestTarget.position))
+                    {
+                        _addedLineRenderer.SetPosition(1, _leftIndexTipPosition);
+                    }
+                    else
+                    {
+                        _addedLineRenderer.SetPosition(1, _rightIndexTipPosition);
+                    }
                 }
             }
         }
@@ -414,6 +462,32 @@ public class ControlManager : NetworkBehaviour
         {
             NetworkDebugConsole.Singleton.SetDebugString($"Despawn requested to the target {number + 1} which does not exist");
         }
+    }
+
+    private void OnDesapwnAllMessageReceived(ulong senderClientId, FastBufferReader reader) {
+        // Read payload in same order as server wrote it
+        reader.ReadValueSafe(out int number);
+        reader.ReadValueSafe(out FixedString64Bytes text);
+
+        DespawnAll();
+    }
+
+    private void DespawnAll() {
+        NetworkDebugConsole.Singleton.SetDebugString($"{_targets.Count} objects to despawn");
+        int _targetsSize = _targets.Count + 1;
+        for (int i = 0; i < _targetsSize; i++)
+        {
+            NetworkDebugConsole.Singleton.SetDebugString($"To be despawned: {_targets[i].GetComponent<TargetController>().index}");
+        }
+        for (int i = 0; i < _targetsSize; i++)
+        {
+            _targets[0].GetComponent<TargetController>().DisappearNow();
+            NetworkDebugConsole.Singleton.SetDebugString($"Despawning {_targets[0].GetComponent<TargetController>().index}");
+        }
+        _targets.Clear();
+        _targetsInRange.Clear();
+        _closestTarget = null;
+        NetworkDebugConsole.Singleton.SetDebugString("Reset");
     }
 
     public void SendHelloToServer(int number) {

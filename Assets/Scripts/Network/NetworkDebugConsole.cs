@@ -11,10 +11,8 @@ public class NetworkDebugConsole : MonoBehaviour
         Connected,
         Disconnected,
     }
-    public event Action<ulong, ConnectionStatus> OnClientConnection;
     [SerializeField] private TMP_Text _tmpText;
     [SerializeField] private int _lineCountMax = 19;
-    private ulong hostId;
     private int _lineCount = 0;
 
     private void Awake() {
@@ -35,44 +33,6 @@ public class NetworkDebugConsole : MonoBehaviour
         {
             throw new Exception($"There is no {nameof(NetworkManager)} for the {nameof(NetworkDebugConsole)} to do stuff with! " +
                 $"Please add a {nameof(NetworkManager)} to the scene.");
-        }
-        NetworkManager.Singleton.OnClientConnectedCallback += OnNetworkConnectionEvent;
-        NetworkManager.Singleton.OnClientDisconnectCallback += OnNetworkDisconnectionEvent;
-    }
-
-    private void OnDestroy() {
-        if (NetworkManager.Singleton != null)
-        {
-            NetworkManager.Singleton.OnClientConnectedCallback -= OnNetworkConnectionEvent;
-            NetworkManager.Singleton.OnClientDisconnectCallback -= OnNetworkDisconnectionEvent;
-        }
-    }
-
-    private void OnNetworkConnectionEvent(ulong clientId) {
-        OnClientConnection?.Invoke(clientId, ConnectionStatus.Connected);
-        if (NetworkManager.Singleton.IsHost)
-        {
-            SetDebugString("Hosted with id: " + clientId);
-            hostId = clientId;
-        }
-        else if (NetworkManager.Singleton.ConnectedClientsIds.Contains(clientId))
-        {
-            SetDebugString("Client connected with id: " + clientId);
-        }
-    }
-    private void OnNetworkDisconnectionEvent(ulong clientId) {
-        OnClientConnection?.Invoke(clientId, ConnectionStatus.Disconnected);
-        if (clientId == hostId)
-        {
-            SetDebugString("Host disconnected with host id: " + clientId);
-        }
-        else if (clientId == NetworkManager.Singleton.LocalClientId)
-        {
-            SetDebugString("Local client disconnected");
-        }
-        else
-        {
-            SetDebugString($"Another client disconnected with {clientId}");
         }
     }
 
