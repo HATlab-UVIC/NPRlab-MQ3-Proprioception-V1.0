@@ -474,15 +474,11 @@ public class ControlManager : NetworkBehaviour
 
     private void DespawnAll() {
         NetworkDebugConsole.Singleton.SetDebugString($"{_targets.Count} objects to despawn");
-        int _targetsSize = _targets.Count + 1;
+        int _targetsSize = _targets.Count;
         for (int i = 0; i < _targetsSize; i++)
         {
-            NetworkDebugConsole.Singleton.SetDebugString($"To be despawned: {_targets[i].GetComponent<TargetController>().index}");
-        }
-        for (int i = 0; i < _targetsSize; i++)
-        {
+            NetworkDebugConsole.Singleton.SetDebugString($"Despawning {_targets[0].GetComponent<TargetController>().index + 1}");
             _targets[0].GetComponent<TargetController>().DisappearNow();
-            NetworkDebugConsole.Singleton.SetDebugString($"Despawning {_targets[0].GetComponent<TargetController>().index}");
         }
         _targets.Clear();
         _targetsInRange.Clear();
