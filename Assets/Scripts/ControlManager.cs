@@ -112,6 +112,10 @@ public class ControlManager : NetworkBehaviour
 
     private void FindClosestTarget() {
         Transform _previousClosestTarget = _closestTarget;
+        Transform _leftClosestTarget = _closestTarget;
+        float _leftClosestDistance = float.PositiveInfinity;
+        Transform _rightClosestTarget = _closestTarget;
+        float _rightClosestDistance = float.PositiveInfinity;
         if (_numberOfTargets > 0)
         {
             if (_targetsInRange.Count > 0)
@@ -122,13 +126,15 @@ public class ControlManager : NetworkBehaviour
                     {
                         if (_targetsInRange[i] != _closestTarget)
                         {
-                            if (Vector3.Distance(_leftIndexTipPosition, _targetsInRange[i].position) < Vector3.Distance(_leftIndexTipPosition, _closestTarget.position))
+                            if (Vector3.Distance(_leftIndexTipPosition, _targetsInRange[i].position) < Vector3.Distance(_leftIndexTipPosition, _leftClosestTarget.position))
                             {
-                                _closestTarget = _targetsInRange[i];
+                                _leftClosestTarget = _targetsInRange[i];
+                                _leftClosestDistance = Vector3.Distance(_leftIndexTipPosition, _targetsInRange[i].position);
                             }
-                            if (Vector3.Distance(_rightIndexTipPosition, _targetsInRange[i].position) < Vector3.Distance(_rightIndexTipPosition, _closestTarget.position))
+                            if (Vector3.Distance(_rightIndexTipPosition, _targetsInRange[i].position) < Vector3.Distance(_rightIndexTipPosition, _rightClosestTarget.position))
                             {
-                                _closestTarget = _targetsInRange[i];
+                                _rightClosestTarget = _targetsInRange[i];
+                                _rightClosestDistance = Vector3.Distance(_rightIndexTipPosition, _targetsInRange[i].position);
                             }
                         }
                     }
@@ -136,6 +142,14 @@ public class ControlManager : NetworkBehaviour
                     {
                         _closestTarget = _targetsInRange[0];
                     }
+                }
+                if (_leftClosestDistance < _rightClosestDistance)
+                {
+                    _closestTarget = _leftClosestTarget;
+                }
+                else
+                {
+                    _closestTarget = _rightClosestTarget;
                 }
                 if (_closestTarget != _previousClosestTarget)
                 {
@@ -161,7 +175,6 @@ public class ControlManager : NetworkBehaviour
         {
             _closestTarget = null;
         }
-        NetworkDebugConsole.Singleton.SetDebugString($"Closest target is {_closestTarget.GetComponent<TargetController>().index}");
     }
 
     public void DestroyThisTarget(Transform _targetToBeDestroyed) {
@@ -501,18 +514,28 @@ public class ControlManager : NetworkBehaviour
         }
     }
 
-    public void SendCaptureToServer(int number) {
+    public void SendCaptureToServer(int number, Vector3 targetPosition) {
         if (NetworkManager.Singleton.IsClient)
         {
             using var writer = new FastBufferWriter(128, Allocator.Temp);
             writer.WriteValueSafe(number);
             writer.WriteValueSafe(new FixedString64Bytes("Captured"));
+            writer.WriteValueSafe(targetPosition);
+            if (Vector3.Distance(targetPosition, _leftIndexTipPosition) < Vector3.Distance(targetPosition, _rightIndexTipPosition))
+            {
+                writer.WriteValueSafe(_leftIndexTipPosition);
+            }
+            else
+            {
+                writer.WriteValueSafe(_rightIndexTipPosition);
+            }
 
             NetworkManager.Singleton.CustomMessagingManager.SendNamedMessage(
                 "CaptureFromClient",
                 NetworkManager.ServerClientId,
                 writer
             );
+            NetworkDebugConsole.Singleton.SetDebugString($"Target {number} captured sent to server.");
         }
     }
 

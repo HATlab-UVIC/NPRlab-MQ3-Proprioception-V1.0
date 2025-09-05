@@ -21,6 +21,7 @@ public class TargetController : MonoBehaviour
             if ( _disappearTime > _disappearingDuration)
             {
                 _startDisappearing = false;
+                ControlManager.Singleton.DestroyThisTarget(transform);
                 GameObject.Destroy(gameObject);
             }
             else
@@ -32,7 +33,6 @@ public class TargetController : MonoBehaviour
     }
 
     public void Disappear() {
-        ControlManager.Singleton.DestroyThisTarget(transform);
         _material = gameObject.GetComponent<MeshRenderer>().material;
         _startDisappearing = true;
     }
@@ -43,6 +43,6 @@ public class TargetController : MonoBehaviour
     }
 
     public void Capture() {
-        ControlManager.Singleton.SendCaptureToServer(index + 1);
+        ControlManager.Singleton.SendCaptureToServer(index + 1, transform.position);
     }
 }
