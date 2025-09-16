@@ -29,6 +29,8 @@ public class ControlManager : NetworkBehaviour
     private Vector3 _pivotPosition;
     private List<Transform> _targetsInRange;
     private Transform _closestTarget = null;
+    private float _debugTimer = 0;
+    private float _debugTime = 0.5f;
 
 
     void Awake() {
@@ -91,9 +93,10 @@ public class ControlManager : NetworkBehaviour
         {
             if (Vector3.Distance(_leftIndexTipPosition, _targets[i].position) < _captureableRange || Vector3.Distance(_rightIndexTipPosition, _targets[i].position) < _captureableRange)
             {
-                if (!_targetsInRange.Contains(_targets[i])) {
+                if (!_targetsInRange.Contains(_targets[i]))
+                {
                     _targetsInRange.Add(_targets[i]);
-                    NetworkDebugConsole.Singleton.SetDebugString($"Target {i} is in range");
+                    NetworkDebugConsole.Singleton.SetDebugString($"Target {i} is in range. {_targetsInRange.Count} targets in range.");
                 }
             }
             else
@@ -101,13 +104,10 @@ public class ControlManager : NetworkBehaviour
                 if (_targetsInRange.Contains(_targets[i]))
                 {
                     _targetsInRange.Remove(_targets[i]);
-                    NetworkDebugConsole.Singleton.SetDebugString($"Target {i} is out of range");
+                    NetworkDebugConsole.Singleton.SetDebugString($"Target {i} is out of range. {_targetsInRange.Count} targets in range.");
                 }
             }
-            // NetworkDebugConsole.Singleton.SetDebugString($"Left hand and target {i} are {Vector3.Distance(_targets[i].position, _leftIndexTipPosition)} away");
-            // NetworkDebugConsole.Singleton.SetDebugString($"Right hand and target {i} are {Vector3.Distance(_targets[i].position, _rightIndexTipPosition)} away");
         }
-        // NetworkDebugConsole.Singleton.SetDebugString($"{_targetsInRange.Count} targets are in range");
     }
 
     private void FindClosestTarget() {
@@ -122,25 +122,15 @@ public class ControlManager : NetworkBehaviour
             {
                 for (int i = 0; i < _targetsInRange.Count; i++)
                 {
-                    if (_closestTarget != null)
+                    if (Vector3.Distance(_leftIndexTipPosition, _targetsInRange[i].position) < _leftClosestDistance)
                     {
-                        if (_targetsInRange[i] != _closestTarget)
-                        {
-                            if (Vector3.Distance(_leftIndexTipPosition, _targetsInRange[i].position) < Vector3.Distance(_leftIndexTipPosition, _leftClosestTarget.position))
-                            {
-                                _leftClosestTarget = _targetsInRange[i];
-                                _leftClosestDistance = Vector3.Distance(_leftIndexTipPosition, _targetsInRange[i].position);
-                            }
-                            if (Vector3.Distance(_rightIndexTipPosition, _targetsInRange[i].position) < Vector3.Distance(_rightIndexTipPosition, _rightClosestTarget.position))
-                            {
-                                _rightClosestTarget = _targetsInRange[i];
-                                _rightClosestDistance = Vector3.Distance(_rightIndexTipPosition, _targetsInRange[i].position);
-                            }
-                        }
+                        _leftClosestTarget = _targetsInRange[i];
+                        _leftClosestDistance = Vector3.Distance(_leftIndexTipPosition, _targetsInRange[i].position);
                     }
-                    else
+                    if (Vector3.Distance(_rightIndexTipPosition, _targetsInRange[i].position) < _rightClosestDistance)
                     {
-                        _closestTarget = _targetsInRange[0];
+                        _rightClosestTarget = _targetsInRange[i];
+                        _rightClosestDistance = Vector3.Distance(_rightIndexTipPosition, _targetsInRange[i].position);
                     }
                 }
                 if (_leftClosestDistance < _rightClosestDistance)
@@ -193,6 +183,7 @@ public class ControlManager : NetworkBehaviour
     }
 
     private void RenderClosestTargetAim() {
+
         if (_targetsInRange.Count > 0)
         {
             if (_closestTarget != null)
