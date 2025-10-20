@@ -14,7 +14,7 @@ This is a proprioception demo for NPR lab. It is to measure offset of propriocep
 4. Connect your device to Windows computer using a link. If you have an issue with sidequest check
 5. Use Sidequest to install `apk` to your Meta Quest.
 6. On Meta Quest, navigate to library -> Unknown sources. You should find this demo.
-7. Launch the demo.
+7. Launch the demo on Meta Quest.
 8. Run the Windows demo.
 9. Once the Windows demo is running, you will see Join code on the Windows demo. Type the Join code in the `Join Code` input text.
 10. Click `Join Lobby` to join the Windows demo as a client.
