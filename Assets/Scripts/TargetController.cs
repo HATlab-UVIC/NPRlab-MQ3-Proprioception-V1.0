@@ -1,3 +1,5 @@
+using Oculus.Interaction;
+using Oculus.Interaction.HandGrab;
 using UnityEngine;
 
 public class TargetController : MonoBehaviour
@@ -7,9 +9,16 @@ public class TargetController : MonoBehaviour
     private float _disappearTime = 0;
     private bool _startDisappearing = false;
     private Material _material;
+    private Grabbable _grabbable;
+    private HandGrabInteractable _handGrabInteractable;
+    private GrabInteractable _grabInteractable;
+
     void Start()
     {
         _material = gameObject.GetComponent<MeshRenderer>().material;
+        _grabbable = GetComponent<Grabbable>();
+        _handGrabInteractable = transform.GetChild(0).GetComponent<HandGrabInteractable>();
+        _grabInteractable = transform.GetChild(0).GetComponent<GrabInteractable>();
         _disappearTime = 0;
     }
 
@@ -35,6 +44,9 @@ public class TargetController : MonoBehaviour
     public void Disappear() {
         _material = gameObject.GetComponent<MeshRenderer>().material;
         _startDisappearing = true;
+        _grabbable.enabled = false;
+        _handGrabInteractable.enabled = false;
+        _grabInteractable.enabled = false;
     }
 
     public void DisappearNow() {

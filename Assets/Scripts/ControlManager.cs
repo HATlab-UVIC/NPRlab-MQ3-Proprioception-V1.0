@@ -256,18 +256,19 @@ public class ControlManager : NetworkBehaviour
     public void SpawnByNumber(int number) {
         GameObject instance;
         number -= 1;
+        float yOffSet = 3f;
         switch (number)
         {
             case 0:
                 instance = Instantiate(_targetPrefab, _spawnContentsParent);
-                instance.transform.localPosition = _pivotPosition + new Vector3((number % 3) * _pivotScale, -(number / 3) * _pivotScale, - _pivotDistance);
+                instance.transform.localPosition = _pivotPosition + new Vector3((number % 3) * _pivotScale, -(number / 3) * _pivotScale + yOffSet, - _pivotDistance);
                 NetworkDebugConsole.Singleton.SetDebugString($"Prefab {number + 1} instantiated locally");
                 instance.GetComponent<TargetController>().index = number;
                 _targets.Add(instance.transform);
                 break;
             case 1:
                 instance = Instantiate(_targetPrefab, _spawnContentsParent);
-                instance.transform.localPosition = _pivotPosition + new Vector3((number % 3) * _pivotScale, -(number / 3) * _pivotScale, - _pivotDistance);
+                instance.transform.localPosition = _pivotPosition + new Vector3((number % 3) * _pivotScale, -(number / 3) * _pivotScale + yOffSet, - _pivotDistance);
                 NetworkDebugConsole.Singleton.SetDebugString($"Prefab {number + 1} instantiated locally");
                 instance.GetComponent<TargetController>().index = number;
                 _targets.Add(instance.transform);
@@ -275,49 +276,49 @@ public class ControlManager : NetworkBehaviour
                 break;
             case 2:
                 instance = Instantiate(_targetPrefab, _spawnContentsParent);
-                instance.transform.localPosition = _pivotPosition + new Vector3((number % 3) * _pivotScale, -(number / 3) * _pivotScale, - _pivotDistance);
+                instance.transform.localPosition = _pivotPosition + new Vector3((number % 3) * _pivotScale, -(number / 3) * _pivotScale + yOffSet, - _pivotDistance);
                 NetworkDebugConsole.Singleton.SetDebugString($"Prefab {number + 1} instantiated locally");
                 instance.GetComponent<TargetController>().index = number;
                 _targets.Add(instance.transform);
                 break;
             case 3:
                 instance = Instantiate(_targetPrefab, _spawnContentsParent);
-                instance.transform.localPosition = _pivotPosition + new Vector3((number % 3) * _pivotScale, -(number / 3) * _pivotScale, - _pivotDistance);
+                instance.transform.localPosition = _pivotPosition + new Vector3((number % 3) * _pivotScale, -(number / 3) * _pivotScale + yOffSet, - _pivotDistance);
                 NetworkDebugConsole.Singleton.SetDebugString($"Prefab {number + 1} instantiated locally");
                 instance.GetComponent<TargetController>().index = number;
                 _targets.Add(instance.transform);
                 break;
             case 4:
                 instance = Instantiate(_targetPrefab, _spawnContentsParent);
-                instance.transform.localPosition = _pivotPosition + new Vector3((number % 3) * _pivotScale, -(number / 3) * _pivotScale, - _pivotDistance);
+                instance.transform.localPosition = _pivotPosition + new Vector3((number % 3) * _pivotScale, -(number / 3) * _pivotScale + yOffSet, - _pivotDistance);
                 NetworkDebugConsole.Singleton.SetDebugString($"Prefab {number + 1} instantiated locally");
                 instance.GetComponent<TargetController>().index = number;
                 _targets.Add(instance.transform);
                 break;
             case 5:
                 instance = Instantiate(_targetPrefab, _spawnContentsParent);
-                instance.transform.localPosition = _pivotPosition + new Vector3((number % 3) * _pivotScale, -(number / 3) * _pivotScale, - _pivotDistance);
+                instance.transform.localPosition = _pivotPosition + new Vector3((number % 3) * _pivotScale, -(number / 3) * _pivotScale + yOffSet, - _pivotDistance);
                 NetworkDebugConsole.Singleton.SetDebugString($"Prefab {number + 1} instantiated locally");
                 instance.GetComponent<TargetController>().index = number;
                 _targets.Add(instance.transform);
                 break;
             case 6:
                 instance = Instantiate(_targetPrefab, _spawnContentsParent);
-                instance.transform.localPosition = _pivotPosition + new Vector3((number % 3) * _pivotScale, -(number / 3) * _pivotScale, - _pivotDistance);
+                instance.transform.localPosition = _pivotPosition + new Vector3((number % 3) * _pivotScale, -(number / 3) * _pivotScale + yOffSet, - _pivotDistance);
                 NetworkDebugConsole.Singleton.SetDebugString($"Prefab {number + 1} instantiated locally");
                 instance.GetComponent<TargetController>().index = number;
                 _targets.Add(instance.transform);
                 break;
             case 7:
                 instance = Instantiate(_targetPrefab, _spawnContentsParent);
-                instance.transform.localPosition = _pivotPosition + new Vector3((number % 3) * _pivotScale, -(number / 3) * _pivotScale, - _pivotDistance);
+                instance.transform.localPosition = _pivotPosition + new Vector3((number % 3) * _pivotScale, -(number / 3) * _pivotScale + yOffSet, - _pivotDistance);
                 NetworkDebugConsole.Singleton.SetDebugString($"Prefab {number + 1} instantiated locally");
                 instance.GetComponent<TargetController>().index = number;
                 _targets.Add(instance.transform);
                 break;
             case 8:
                 instance = Instantiate(_targetPrefab, _spawnContentsParent);
-                instance.transform.localPosition = _pivotPosition + new Vector3((number % 3) * _pivotScale, -(number / 3) * _pivotScale, - _pivotDistance);
+                instance.transform.localPosition = _pivotPosition + new Vector3((number % 3) * _pivotScale, -(number / 3) * _pivotScale + yOffSet, - _pivotDistance);
                 NetworkDebugConsole.Singleton.SetDebugString($"Prefab {number + 1} instantiated locally");
                 instance.GetComponent<TargetController>().index = number;
                 _targets.Add(instance.transform);
