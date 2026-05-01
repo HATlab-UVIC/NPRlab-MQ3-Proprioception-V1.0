@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using TMPro;
 using Unity.Collections;
+using Unity.Mathematics;
 using Unity.Netcode;
 using Unity.Services.Lobbies;
 using Unity.Services.Multiplayer;
@@ -25,9 +26,11 @@ public class ControlManager : NetworkBehaviour
     [SerializeField] private Transform _rightFingerTipSphere;
     [SerializeField] private Transform _spawnContentsParent;
     [SerializeField] private TextMeshProUGUI _isDebugLineRenderingText;
+    [SerializeField] private LineRenderer _lineRenderer;
+    [SerializeField] private Transform _lineRendererDebugCongroller;
     private Vector3 _rightIndexTipPosition;
     private Vector3 _leftIndexTipPosition;
-    private int _numberOfTargets = 0;
+    private int _numberOfTargetsSpawned = 0;
     private List<Transform> _targets;
     private Vector3 _pivotPosition;
     private List<Transform> _targetsInRange;
@@ -70,6 +73,7 @@ public class ControlManager : NetworkBehaviour
         FindTargetsInRange();
         FindClosestTarget();
         RenderClosestTargetAim();
+        UpdateDebugSphereLineRenderer();
     }
 
     private void UpdateHandPositions() {
@@ -133,7 +137,7 @@ public class ControlManager : NetworkBehaviour
         float _leftClosestDistance = float.PositiveInfinity;
         Transform _rightClosestTarget = _closestTarget;
         float _rightClosestDistance = float.PositiveInfinity;
-        if (_numberOfTargets > 0)
+        if (_numberOfTargetsSpawned > 0)
         {
             if (_targetsInRange.Count > 0)
             {
@@ -253,7 +257,7 @@ public class ControlManager : NetworkBehaviour
         }
     }
 
-    public void SpawnByNumber(int number) {
+    /*public void SpawnByNumber(int number) {
         GameObject instance;
         number -= 1;
         float yOffSet = 3f;
@@ -327,7 +331,134 @@ public class ControlManager : NetworkBehaviour
                 NetworkDebugConsole.Singleton.SetDebugString("Not a valid number input");
                 break;
         }
-        _numberOfTargets += 1;
+    }*/
+
+    private void UpdateDebugSphereLineRenderer() {
+        // 1. Setup variables
+        float radius = _lineRendererDebugCongroller.position.z * 2;
+
+        // Calculate sphere center RELATIVE to the parent's orientation
+        // This moves the center forward/backward along the parent's local Z axis
+        float zOffset = _lineRendererDebugCongroller.position.y * 1.5f - 1f;
+        Vector3 sphereCentre = _spawnContentsParent.position + (_spawnContentsParent.rotation * new Vector3(0, 0, zOffset));
+
+        float hLimit = (_lineRendererDebugCongroller.position.x + 1) * 60f;
+        float vLimit = (_lineRendererDebugCongroller.position.x + 1) * 60f;
+
+        int resolution = 10;
+        _lineRenderer.positionCount = resolution * 4;
+
+        // The arc starts from the parent's local forward
+        Vector3 localForward = Vector3.forward;
+
+        for (int i = 0; i < resolution; i++)
+        {
+            float t = (float)i / resolution;
+
+            // Helper to calculate the rotated point relative to the parent
+            Vector3 GetRotatedPoint(float h, float v) {
+                // Apply the h/v rotation first, then "parent" it to the object's rotation
+                Quaternion arcRotation = Quaternion.Euler(-v, h, 0);
+                Vector3 rotatedDirection = _spawnContentsParent.rotation * (arcRotation * localForward);
+                return sphereCentre + (rotatedDirection * radius);
+            }
+
+            // Loop 1: Top (Left to Right)
+            _lineRenderer.SetPosition(i, GetRotatedPoint(
+                Mathf.Lerp(-hLimit / 2, hLimit / 2, t),
+                vLimit / 2));
+
+            // Loop 2: Right (Top to Bottom)
+            _lineRenderer.SetPosition(i + resolution, GetRotatedPoint(
+                hLimit / 2,
+                Mathf.Lerp(vLimit / 2, -vLimit / 2, t)));
+
+            // Loop 3: Bottom (Right to Left)
+            _lineRenderer.SetPosition(i + (resolution * 2), GetRotatedPoint(
+                Mathf.Lerp(hLimit / 2, -hLimit / 2, t),
+                -vLimit / 2));
+
+            // Loop 4: Left (Bottom to Top)
+            _lineRenderer.SetPosition(i + (resolution * 3), GetRotatedPoint(
+                -hLimit / 2,
+                Mathf.Lerp(-vLimit / 2, vLimit / 2, t)));
+        }
+    }
+
+    public void SpawnByNumber(int number) {
+        GameObject instance = Instantiate(_targetPrefab, _spawnContentsParent);
+
+        float yOffSet = 3f;
+        switch (number)
+        {
+            case 0:
+                instance = Instantiate(_targetPrefab, _spawnContentsParent);
+                instance.transform.localPosition = _pivotPosition + new Vector3((number % 3) * _pivotScale, -(number / 3) * _pivotScale + yOffSet, -_pivotDistance);
+                NetworkDebugConsole.Singleton.SetDebugString($"Prefab {number + 1} instantiated locally");
+                instance.GetComponent<TargetController>().index = number;
+                _targets.Add(instance.transform);
+                break;
+            case 1:
+                instance = Instantiate(_targetPrefab, _spawnContentsParent);
+                instance.transform.localPosition = _pivotPosition + new Vector3((number % 3) * _pivotScale, -(number / 3) * _pivotScale + yOffSet, -_pivotDistance);
+                NetworkDebugConsole.Singleton.SetDebugString($"Prefab {number + 1} instantiated locally");
+                instance.GetComponent<TargetController>().index = number;
+                _targets.Add(instance.transform);
+
+                break;
+            case 2:
+                instance = Instantiate(_targetPrefab, _spawnContentsParent);
+                instance.transform.localPosition = _pivotPosition + new Vector3((number % 3) * _pivotScale, -(number / 3) * _pivotScale + yOffSet, -_pivotDistance);
+                NetworkDebugConsole.Singleton.SetDebugString($"Prefab {number + 1} instantiated locally");
+                instance.GetComponent<TargetController>().index = number;
+                _targets.Add(instance.transform);
+                break;
+            case 3:
+                instance = Instantiate(_targetPrefab, _spawnContentsParent);
+                instance.transform.localPosition = _pivotPosition + new Vector3((number % 3) * _pivotScale, -(number / 3) * _pivotScale + yOffSet, -_pivotDistance);
+                NetworkDebugConsole.Singleton.SetDebugString($"Prefab {number + 1} instantiated locally");
+                instance.GetComponent<TargetController>().index = number;
+                _targets.Add(instance.transform);
+                break;
+            case 4:
+                instance = Instantiate(_targetPrefab, _spawnContentsParent);
+                instance.transform.localPosition = _pivotPosition + new Vector3((number % 3) * _pivotScale, -(number / 3) * _pivotScale + yOffSet, -_pivotDistance);
+                NetworkDebugConsole.Singleton.SetDebugString($"Prefab {number + 1} instantiated locally");
+                instance.GetComponent<TargetController>().index = number;
+                _targets.Add(instance.transform);
+                break;
+            case 5:
+                instance = Instantiate(_targetPrefab, _spawnContentsParent);
+                instance.transform.localPosition = _pivotPosition + new Vector3((number % 3) * _pivotScale, -(number / 3) * _pivotScale + yOffSet, -_pivotDistance);
+                NetworkDebugConsole.Singleton.SetDebugString($"Prefab {number + 1} instantiated locally");
+                instance.GetComponent<TargetController>().index = number;
+                _targets.Add(instance.transform);
+                break;
+            case 6:
+                instance = Instantiate(_targetPrefab, _spawnContentsParent);
+                instance.transform.localPosition = _pivotPosition + new Vector3((number % 3) * _pivotScale, -(number / 3) * _pivotScale + yOffSet, -_pivotDistance);
+                NetworkDebugConsole.Singleton.SetDebugString($"Prefab {number + 1} instantiated locally");
+                instance.GetComponent<TargetController>().index = number;
+                _targets.Add(instance.transform);
+                break;
+            case 7:
+                instance = Instantiate(_targetPrefab, _spawnContentsParent);
+                instance.transform.localPosition = _pivotPosition + new Vector3((number % 3) * _pivotScale, -(number / 3) * _pivotScale + yOffSet, -_pivotDistance);
+                NetworkDebugConsole.Singleton.SetDebugString($"Prefab {number + 1} instantiated locally");
+                instance.GetComponent<TargetController>().index = number;
+                _targets.Add(instance.transform);
+                break;
+            case 8:
+                instance = Instantiate(_targetPrefab, _spawnContentsParent);
+                instance.transform.localPosition = _pivotPosition + new Vector3((number % 3) * _pivotScale, -(number / 3) * _pivotScale + yOffSet, -_pivotDistance);
+                NetworkDebugConsole.Singleton.SetDebugString($"Prefab {number + 1} instantiated locally");
+                instance.GetComponent<TargetController>().index = number;
+                _targets.Add(instance.transform);
+                break;
+            default:
+                NetworkDebugConsole.Singleton.SetDebugString("Not a valid number input");
+                break;
+        }
     }
 
     public void DespawnByNumber(int number) {
@@ -447,16 +578,16 @@ public class ControlManager : NetworkBehaviour
                 NetworkDebugConsole.Singleton.SetDebugString("Not a valid number input");
                 break;
         }
-        _numberOfTargets += 1;
     }
 
     private void OnSpawnInputMessageReceived(ulong senderClientId, FastBufferReader reader) {
         // Read payload in same order as server wrote it
-        reader.ReadValueSafe(out int number);
         reader.ReadValueSafe(out FixedString64Bytes text);
+        reader.ReadValueSafe(out int number);
 
         NetworkDebugConsole.Singleton.SetDebugString($"Received from {senderClientId}: {number}, {text}");
-        SpawnByNumber(number);
+        _numberOfTargetsSpawned += 1;
+        SpawnByNumber(_numberOfTargetsSpawned);
         SendHelloToServer(number);
     }
 
@@ -505,6 +636,7 @@ public class ControlManager : NetworkBehaviour
         _targets.Clear();
         _targetsInRange.Clear();
         _closestTarget = null;
+        _numberOfTargetsSpawned = 0;
         NetworkDebugConsole.Singleton.SetDebugString("Reset");
     }
 
