@@ -27,7 +27,7 @@ public class ControlManager : NetworkBehaviour
     [SerializeField] private Transform _spawnContentsParent;
     [SerializeField] private TextMeshProUGUI _isDebugLineRenderingText;
     [SerializeField] private LineRenderer _lineRenderer;
-    [SerializeField] private Transform _lineRendererDebugCongroller;
+    [SerializeField] private Transform _lineRendererDebugController;
     private Vector3 _rightIndexTipPosition;
     private Vector3 _leftIndexTipPosition;
     private int _numberOfTargetsSpawned = 0;
@@ -344,12 +344,12 @@ public class ControlManager : NetworkBehaviour
         GameObject instance = Instantiate(_targetPrefab, _spawnContentsParent);
 
         // 1. Calculate the Sphere Center (World Space)
-        float radius = _lineRendererDebugCongroller.position.z * 2;
-        float zOffset = _lineRendererDebugCongroller.position.y * 1.5f - 1f;
+        float radius = _lineRendererDebugController.position.z * 2;
+        float zOffset = _lineRendererDebugController.position.y * 1.5f - 1f;
         Vector3 sphereCentre = _spawnContentsParent.position + (_spawnContentsParent.rotation * new Vector3(0, 0, zOffset));
 
-        float hLimit = (_lineRendererDebugCongroller.position.x + 1) * 60f;
-        float vLimit = (_lineRendererDebugCongroller.position.x + 1) * 60f;
+        float hLimit = (_lineRendererDebugController.position.x + 1) * 60f;
+        float vLimit = (_lineRendererDebugController.position.x + 1) * 60f;
 
         // 2. Helper function (returns WORLD position)
         Vector3 GetRotatedPoint(float h, float v) {
@@ -378,15 +378,15 @@ public class ControlManager : NetworkBehaviour
 
     private void UpdateDebugSphereLineRenderer() {
         // 1. Setup variables
-        float radius = _lineRendererDebugCongroller.position.z * 2;
+        float radius = _lineRendererDebugController.position.z * 2;
 
         // Calculate sphere center RELATIVE to the parent's orientation
         // This moves the center forward/backward along the parent's local Z axis
-        float zOffset = _lineRendererDebugCongroller.position.y * 1.5f - 1f;
+        float zOffset = _lineRendererDebugController.position.y * 1.5f - 1f;
         Vector3 sphereCentre = _spawnContentsParent.position + (_spawnContentsParent.rotation * new Vector3(0, 0, zOffset));
 
-        float hLimit = (_lineRendererDebugCongroller.position.x + 1) * 60f;
-        float vLimit = (_lineRendererDebugCongroller.position.x + 1) * 60f;
+        float hLimit = (_lineRendererDebugController.position.x + 1) * 60f;
+        float vLimit = (_lineRendererDebugController.position.x + 1) * 60f;
 
         int resolution = 10;
         _lineRenderer.positionCount = resolution * 4;
@@ -549,13 +549,13 @@ public class ControlManager : NetworkBehaviour
 
     private void OnSpawnInputMessageReceived(ulong senderClientId, FastBufferReader reader) {
         // Read payload in same order as server wrote it
-        reader.ReadValueSafe(out int number);
         reader.ReadValueSafe(out FixedString64Bytes text);
+        reader.ReadValueSafe(out int number);
 
         NetworkDebugConsole.Singleton.SetDebugString($"Received from {senderClientId}: {number}, {text}");
         _numberOfTargetsSpawned += 1;
         SpawnByNumber(number);
-        SendHelloToServer(number);
+        // SendHelloToServer(number);
     }
 
     private void OnDesapwnInputMessageReceived(ulong senderClientId, FastBufferReader reader) {
@@ -628,14 +628,17 @@ public class ControlManager : NetworkBehaviour
             using var writer = new FastBufferWriter(128, Allocator.Temp);
             writer.WriteValueSafe(number);
             writer.WriteValueSafe(new FixedString64Bytes("Captured"));
-            writer.WriteValueSafe(targetPosition);
             if (Vector3.Distance(targetPosition, _leftIndexTipPosition) < Vector3.Distance(targetPosition, _rightIndexTipPosition))
             {
-                writer.WriteValueSafe(_leftIndexTipPosition);
+                Vector3 worldDirection = _leftIndexTipPosition - targetPosition;
+                Vector3 localOffset = Quaternion.Inverse(_spawnContentsParent.rotation) * worldDirection;
+                writer.WriteValueSafe(localOffset);
             }
             else
             {
-                writer.WriteValueSafe(_rightIndexTipPosition);
+                Vector3 worldDirection = _rightIndexTipPosition - targetPosition;
+                Vector3 localOffset = Quaternion.Inverse(_spawnContentsParent.rotation) * worldDirection;
+                writer.WriteValueSafe(localOffset);
             }
 
             NetworkManager.Singleton.CustomMessagingManager.SendNamedMessage(
