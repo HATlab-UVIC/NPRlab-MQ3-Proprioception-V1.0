@@ -333,6 +333,49 @@ public class ControlManager : NetworkBehaviour
         }
     }*/
 
+    public void SpawnByNumber(int number) {
+        number--;
+        if (number < 0 || number > 8)
+        {
+            NetworkDebugConsole.Singleton.SetDebugString("Not a valid number input");
+            return;
+        }
+
+        GameObject instance = Instantiate(_targetPrefab, _spawnContentsParent);
+
+        // 1. Calculate the Sphere Center (World Space)
+        float radius = _lineRendererDebugCongroller.position.z * 2;
+        float zOffset = _lineRendererDebugCongroller.position.y * 1.5f - 1f;
+        Vector3 sphereCentre = _spawnContentsParent.position + (_spawnContentsParent.rotation * new Vector3(0, 0, zOffset));
+
+        float hLimit = (_lineRendererDebugCongroller.position.x + 1) * 60f;
+        float vLimit = (_lineRendererDebugCongroller.position.x + 1) * 60f;
+
+        // 2. Helper function (returns WORLD position)
+        Vector3 GetRotatedPoint(float h, float v) {
+            Quaternion arcRotation = Quaternion.Euler(-v, h, 0);
+            Vector3 rotatedDirection = _spawnContentsParent.rotation * (arcRotation * Vector3.forward);
+            return sphereCentre + (rotatedDirection * radius);
+        }
+
+        // 3. Grid Logic (Map 0-8 to a 3x3 grid)
+        // Row (0, 1, 2) and Col (0, 1, 2)
+        int row = number / 3;
+        int col = number % 3;
+
+        // Map 0,1,2 to -Limit/2, 0, +Limit/2
+        float hPos = Mathf.Lerp(-hLimit / 2, hLimit / 2, col / 2.0f);
+        float vPos = Mathf.Lerp(vLimit / 2, -vLimit / 2, row / 2.0f); // Top to bottom
+
+        // 4. Assign World Position
+        instance.transform.position = GetRotatedPoint(hPos, vPos);
+
+        // Cleanup
+        instance.GetComponent<TargetController>().index = number;
+        _targets.Add(instance.transform);
+        NetworkDebugConsole.Singleton.SetDebugString($"Prefab {number + 1} instantiated at {hPos}, {vPos}");
+    }
+
     private void UpdateDebugSphereLineRenderer() {
         // 1. Setup variables
         float radius = _lineRendererDebugCongroller.position.z * 2;
@@ -382,82 +425,6 @@ public class ControlManager : NetworkBehaviour
             _lineRenderer.SetPosition(i + (resolution * 3), GetRotatedPoint(
                 -hLimit / 2,
                 Mathf.Lerp(-vLimit / 2, vLimit / 2, t)));
-        }
-    }
-
-    public void SpawnByNumber(int number) {
-        GameObject instance = Instantiate(_targetPrefab, _spawnContentsParent);
-
-        float yOffSet = 3f;
-        switch (number)
-        {
-            case 0:
-                instance = Instantiate(_targetPrefab, _spawnContentsParent);
-                instance.transform.localPosition = _pivotPosition + new Vector3((number % 3) * _pivotScale, -(number / 3) * _pivotScale + yOffSet, -_pivotDistance);
-                NetworkDebugConsole.Singleton.SetDebugString($"Prefab {number + 1} instantiated locally");
-                instance.GetComponent<TargetController>().index = number;
-                _targets.Add(instance.transform);
-                break;
-            case 1:
-                instance = Instantiate(_targetPrefab, _spawnContentsParent);
-                instance.transform.localPosition = _pivotPosition + new Vector3((number % 3) * _pivotScale, -(number / 3) * _pivotScale + yOffSet, -_pivotDistance);
-                NetworkDebugConsole.Singleton.SetDebugString($"Prefab {number + 1} instantiated locally");
-                instance.GetComponent<TargetController>().index = number;
-                _targets.Add(instance.transform);
-
-                break;
-            case 2:
-                instance = Instantiate(_targetPrefab, _spawnContentsParent);
-                instance.transform.localPosition = _pivotPosition + new Vector3((number % 3) * _pivotScale, -(number / 3) * _pivotScale + yOffSet, -_pivotDistance);
-                NetworkDebugConsole.Singleton.SetDebugString($"Prefab {number + 1} instantiated locally");
-                instance.GetComponent<TargetController>().index = number;
-                _targets.Add(instance.transform);
-                break;
-            case 3:
-                instance = Instantiate(_targetPrefab, _spawnContentsParent);
-                instance.transform.localPosition = _pivotPosition + new Vector3((number % 3) * _pivotScale, -(number / 3) * _pivotScale + yOffSet, -_pivotDistance);
-                NetworkDebugConsole.Singleton.SetDebugString($"Prefab {number + 1} instantiated locally");
-                instance.GetComponent<TargetController>().index = number;
-                _targets.Add(instance.transform);
-                break;
-            case 4:
-                instance = Instantiate(_targetPrefab, _spawnContentsParent);
-                instance.transform.localPosition = _pivotPosition + new Vector3((number % 3) * _pivotScale, -(number / 3) * _pivotScale + yOffSet, -_pivotDistance);
-                NetworkDebugConsole.Singleton.SetDebugString($"Prefab {number + 1} instantiated locally");
-                instance.GetComponent<TargetController>().index = number;
-                _targets.Add(instance.transform);
-                break;
-            case 5:
-                instance = Instantiate(_targetPrefab, _spawnContentsParent);
-                instance.transform.localPosition = _pivotPosition + new Vector3((number % 3) * _pivotScale, -(number / 3) * _pivotScale + yOffSet, -_pivotDistance);
-                NetworkDebugConsole.Singleton.SetDebugString($"Prefab {number + 1} instantiated locally");
-                instance.GetComponent<TargetController>().index = number;
-                _targets.Add(instance.transform);
-                break;
-            case 6:
-                instance = Instantiate(_targetPrefab, _spawnContentsParent);
-                instance.transform.localPosition = _pivotPosition + new Vector3((number % 3) * _pivotScale, -(number / 3) * _pivotScale + yOffSet, -_pivotDistance);
-                NetworkDebugConsole.Singleton.SetDebugString($"Prefab {number + 1} instantiated locally");
-                instance.GetComponent<TargetController>().index = number;
-                _targets.Add(instance.transform);
-                break;
-            case 7:
-                instance = Instantiate(_targetPrefab, _spawnContentsParent);
-                instance.transform.localPosition = _pivotPosition + new Vector3((number % 3) * _pivotScale, -(number / 3) * _pivotScale + yOffSet, -_pivotDistance);
-                NetworkDebugConsole.Singleton.SetDebugString($"Prefab {number + 1} instantiated locally");
-                instance.GetComponent<TargetController>().index = number;
-                _targets.Add(instance.transform);
-                break;
-            case 8:
-                instance = Instantiate(_targetPrefab, _spawnContentsParent);
-                instance.transform.localPosition = _pivotPosition + new Vector3((number % 3) * _pivotScale, -(number / 3) * _pivotScale + yOffSet, -_pivotDistance);
-                NetworkDebugConsole.Singleton.SetDebugString($"Prefab {number + 1} instantiated locally");
-                instance.GetComponent<TargetController>().index = number;
-                _targets.Add(instance.transform);
-                break;
-            default:
-                NetworkDebugConsole.Singleton.SetDebugString("Not a valid number input");
-                break;
         }
     }
 
@@ -582,12 +549,12 @@ public class ControlManager : NetworkBehaviour
 
     private void OnSpawnInputMessageReceived(ulong senderClientId, FastBufferReader reader) {
         // Read payload in same order as server wrote it
-        reader.ReadValueSafe(out FixedString64Bytes text);
         reader.ReadValueSafe(out int number);
+        reader.ReadValueSafe(out FixedString64Bytes text);
 
         NetworkDebugConsole.Singleton.SetDebugString($"Received from {senderClientId}: {number}, {text}");
         _numberOfTargetsSpawned += 1;
-        SpawnByNumber(_numberOfTargetsSpawned);
+        SpawnByNumber(number);
         SendHelloToServer(number);
     }
 
